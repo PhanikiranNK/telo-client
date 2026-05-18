@@ -10,6 +10,7 @@ import {
   StatusBar,
   TextInput,
   Dimensions,
+  Image,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '../theme';
@@ -497,7 +498,11 @@ export function LoginScreen() {
       <View style={styles.contentCanvas}>
         {/* Top Header Logo */}
         <View style={styles.topLogoContainer}>
-          <Text style={styles.logoMark}>T</Text>
+          <Image
+            source={require('../../assets/app-telo.png')}
+            style={styles.logoImage}
+            resizeMode="contain"
+          />
           <Text style={styles.logoText}>TELO</Text>
         </View>
 
@@ -512,7 +517,7 @@ export function LoginScreen() {
             Write, plan,{' \n'}collaborate.
           </Text>
           <Text style={styles.welcomeSubtitle}>
-            A sub-200ms real-time workspace for high performance teams. Fast, offline-first, and secure.
+            A real-time workspace for high performance teams. Fast, secure, and collaborative.
           </Text>
         </View>
 
@@ -946,23 +951,15 @@ const styles = StyleSheet.create({
     marginTop: Platform.OS === 'ios' ? 10 : 20,
     gap: 6,
   },
-  logoMark: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#FFFFFF',
-    backgroundColor: '#1A1A1A',
-    width: 28,
-    height: 28,
-    borderRadius: Radius.md,
-    textAlign: 'center',
-    lineHeight: 28,
-    overflow: 'hidden',
+  logoImage: {
+    width: 50,
+    height: 50,
   },
   logoText: {
-    fontSize: 18,
+    fontSize: 24,
     fontWeight: FontWeight.extrabold,
     color: '#1A1A1A',
-    letterSpacing: 2,
+    letterSpacing: 4,
   },
   carouselOuter: {
     height: 220,

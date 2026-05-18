@@ -15,6 +15,7 @@ import type { RootState } from '../store';
 import { Colors, FontSize, FontWeight, Radius, Spacing } from '../theme';
 import { isFirebaseMock } from '../config/firebase';
 import { socketService } from '../config/socket';
+import { SERVER_URL } from '../config/env';
 import { useFeedback } from '../hooks/useFeedback';
 
 // ─── Lucide React Native Vector Icons ─────────────────────────────────────────
@@ -194,7 +195,7 @@ export function ProfileScreen({
                         </View>
                         <Text style={styles.statLabel}>Socket Server</Text>
                     </View>
-                    <Text style={styles.statVal}>http://localhost:5002</Text>
+                    <Text style={styles.statVal}>{SERVER_URL}</Text>
                 </View>
 
                 <View style={styles.statItem}>
