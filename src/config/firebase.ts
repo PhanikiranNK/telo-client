@@ -1,10 +1,10 @@
 // client/src/config/firebase.ts
 import { initializeApp, getApps, getApp } from 'firebase/app';
-import { 
-  initializeAuth, 
-  getAuth, 
+import {
+  initializeAuth,
+  getAuth,
   // @ts-ignore
-  getReactNativePersistence 
+  getReactNativePersistence
 } from 'firebase/auth';
 import { getFirestore } from 'firebase/firestore';
 import { getDatabase } from 'firebase/database';
@@ -30,9 +30,12 @@ if (!isFirebaseMock) {
       databaseURL: process.env.EXPO_PUBLIC_FIREBASE_DATABASE_URL,
     };
 
-    app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    // 1. Check length FIRST before initializing
+    const isFirstLoad = getApps().length === 0;
+    app = isFirstLoad ? initializeApp(firebaseConfig) : getApp();
 
-    if (getApps().length === 0) {
+    // 2. Safely apply persistence on initial boot window
+    if (isFirstLoad) {
       auth = initializeAuth(app, {
         persistence: getReactNativePersistence(AsyncStorage),
       });
@@ -45,19 +48,15 @@ if (!isFirebaseMock) {
     console.log('🔥 Firebase client SDK successfully initialized.');
   } catch (error) {
     console.error('❌ Failed to initialize Firebase client SDK:', error);
-    // Force mock fallback on initialization failure
     app = {};
-    auth = { currentUser: null, signOut: async () => {} };
+    auth = { currentUser: null, signOut: async () => { } };
     db = {};
     rtdb = {};
   }
 } else {
   console.warn('⚠️  No valid EXPO_PUBLIC_FIREBASE_API_KEY found. TELO is running in client DEVELOPMENT MOCK mode.');
   app = {};
-  auth = {
-    currentUser: null,
-    signOut: async () => {},
-  };
+  auth = { currentUser: null, signOut: async () => { } };
   db = {};
   rtdb = {};
 }

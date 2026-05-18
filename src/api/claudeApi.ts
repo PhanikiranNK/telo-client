@@ -1,8 +1,10 @@
 import type { Message, TaskItem } from '../types';
 
-const CLAUDE_API_URL = process.env.EXPO_PUBLIC_SERVER_URL
-  ? `${process.env.EXPO_PUBLIC_SERVER_URL}/api/claude/extract-tasks`
-  : 'http://localhost:3001/api/claude/extract-tasks';
+import { SERVER_URL } from '../config/env';
+
+
+const CLAUDE_API_URL = `${SERVER_URL}/api/claude/extract-tasks`;
+
 
 export interface ClaudeExtractResponse {
   tasks: TaskItem[];

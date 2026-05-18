@@ -15,6 +15,8 @@ export interface TaskItem {
   checklist: string;
   assignee: string;
   dueDate?: string; // Format: YYYY-MM-DD
+  column?: 'todo' | 'progress' | 'done';
+  completedBy?: string;
 }
 
 interface TaskCardProps {
@@ -39,6 +41,16 @@ function isDateOverdue(dateStr?: string) {
   return d < today;
 }
 
+function getChecklistText(checklist: string, isCompleted: boolean, completedBy?: string) {
+  if (!isCompleted) return checklist;
+  const match = checklist.match(/(\d+)\/(\d+)/);
+  const total = match ? match[2] : '1';
+  if (completedBy) {
+    return `${total}/${total} completed by ${completedBy}`;
+  }
+  return `${total}/${total} completed`;
+}
+
 export function TaskCard({ task }: TaskCardProps) {
   const badgeColor =
     task.priority === 'High' ? { bg: '#FEF2F2', text: '#EF4444' } :
@@ -46,6 +58,9 @@ export function TaskCard({ task }: TaskCardProps) {
     { bg: '#ECFDF5', text: '#10B981' };
 
   const isOverdue = isDateOverdue(task.dueDate);
+  const isCompleted = task.column === 'done';
+  const checklistColor = isCompleted ? '#22C55E' : '#64748B';
+  const checklistText = getChecklistText(task.checklist || '0/1 pending', isCompleted, task.completedBy);
 
   return (
     <View style={styles.taskCard}>
@@ -60,9 +75,11 @@ export function TaskCard({ task }: TaskCardProps) {
       <View style={styles.taskDivider} />
       
       <View style={styles.taskFooterRow}>
-        <View style={styles.taskChecklistRow}>
-          <CheckSquare size={12} color="#64748B" />
-          <Text style={styles.taskChecklist}>{task.checklist}</Text>
+        <View style={[styles.taskChecklistRow, isCompleted && styles.taskChecklistRowCompleted]}>
+          <CheckSquare size={12} color={checklistColor} />
+          <Text style={[styles.taskChecklist, isCompleted && styles.taskChecklistCompleted]}>
+            {checklistText}
+          </Text>
         </View>
 
         {task.dueDate ? (
@@ -133,10 +150,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 6,
   },
+  taskChecklistRowCompleted: {
+    backgroundColor: '#ECFDF5',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 0.5,
+    borderColor: '#A7F3D0',
+  },
   taskChecklist: {
     fontSize: 11,
     color: '#64748B',
     fontWeight: FontWeight.medium,
+  },
+  taskChecklistCompleted: {
+    color: '#22C55E',
+    fontWeight: FontWeight.bold,
   },
   dueDateBadge: {
     flexDirection: 'row',

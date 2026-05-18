@@ -13,6 +13,7 @@ import {
 import type { Message, TaskItem } from '../types';
 import { Colors, FontSize, FontWeight, Spacing, Radius } from '../theme';
 import Constants from 'expo-constants';
+import { SERVER_URL } from '../config/env';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Sparkles as LucideSparkles,
@@ -258,13 +259,7 @@ export function TaskModal({ visible, messages, onClose }: TaskModalProps) {
         .map((m) => `[${m.timestamp}] ${m.senderName}: ${m.text}`)
         .join('\n');
 
-      // Resolve active Metro host IP dynamically
-      const hostUri = Constants.expoConfig?.hostUri;
-      let ip = hostUri ? hostUri.split(':')[0] : 'localhost';
-      if (ip === 'localhost' && Platform.OS === 'android') {
-        ip = '10.0.2.2'; // Standard loopback for Android emulator
-      }
-      const apiUrl = `http://${ip}:5002/api/tasks/extract`;
+      const apiUrl = `${SERVER_URL}/api/tasks/extract`;
 
       fetch(apiUrl, {
         method: 'POST',

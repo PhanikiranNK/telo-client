@@ -132,7 +132,7 @@ export function TaskScreen() {
       });
     }
 
-    function handleTaskMoved(data: { taskId: string; column: 'todo' | 'progress' | 'done' }) {
+    function handleTaskMoved(data: { taskId: string; column: 'todo' | 'progress' | 'done'; completedBy?: string }) {
       setTasks((prev) => {
         let foundTask: BoardTask | null = null;
         
@@ -155,7 +155,16 @@ export function TaskScreen() {
         // Append to target column
         if (foundTask) {
           const taskObj = foundTask as BoardTask;
-          const updatedTask: BoardTask = { ...taskObj, column: data.column };
+          const match = (taskObj.checklist || '').match(/(\d+)\/(\d+)/);
+          const total = match ? match[2] : '1';
+          const updatedChecklist = data.column === 'done' ? `${total}/${total} completed` : `0/${total} pending`;
+
+          const updatedTask: BoardTask = {
+            ...taskObj,
+            column: data.column,
+            checklist: updatedChecklist,
+            completedBy: data.column === 'done' ? (data.completedBy || 'Anonymous') : undefined,
+          };
           updated[data.column] = [updatedTask, ...updated[data.column]];
         } else {
           // Robust fallback: fetch all if task wasn't in state
@@ -181,13 +190,16 @@ export function TaskScreen() {
   function handleAddNewTask() {
     if (!newTaskTitle.trim()) return;
 
+    const isDone = activeColumn === 'done';
+    const completedBy = isDone ? (currentUser?.displayName || 'Anonymous') : undefined;
     const taskPayload = {
       title: newTaskTitle.trim(),
       desc: newTaskDesc.trim() || 'No description provided.',
       priority: newTaskPriority,
-      checklist: '0/1 pending',
+      checklist: isDone ? '1/1 completed' : '0/1 pending',
       assignee: currentUser?.displayName || 'Anonymous User',
       dueDate: selectedDate ? formatDateString(selectedDate) : undefined,
+      completedBy,
     };
 
     const socket = socketService.socket;
@@ -225,6 +237,11 @@ export function TaskScreen() {
 
   function handleMoveTask(task: BoardTask, targetColumn: 'todo' | 'progress' | 'done') {
     const socket = socketService.socket;
+    const match = (task.checklist || '').match(/(\d+)\/(\d+)/);
+    const total = match ? match[2] : '1';
+    const updatedChecklist = targetColumn === 'done' ? `${total}/${total} completed` : `0/${total} pending`;
+    const completedBy = targetColumn === 'done' ? (currentUser?.displayName || 'Anonymous') : undefined;
+
     if (socket && socket.connected) {
       socket.emit('task:move', { taskId: task.id, column: targetColumn }, (res: any) => {
         if (res && res.success) {
@@ -234,7 +251,13 @@ export function TaskScreen() {
               progress: prev.progress.filter((t) => t.id !== task.id),
               done: prev.done.filter((t) => t.id !== task.id),
             };
-            const movedTask: BoardTask = { ...task, column: targetColumn };
+            const movedTask: BoardTask = {
+              ...task,
+              column: targetColumn,
+              checklist: updatedChecklist,
+              completedBy,
+              ...(res.task || {})
+            };
             updated[targetColumn] = [movedTask, ...updated[targetColumn]];
             return updated;
           });
@@ -248,7 +271,12 @@ export function TaskScreen() {
           progress: prev.progress.filter((t) => t.id !== task.id),
           done: prev.done.filter((t) => t.id !== task.id),
         };
-        const movedTask: BoardTask = { ...task, column: targetColumn };
+        const movedTask: BoardTask = {
+          ...task,
+          column: targetColumn,
+          checklist: updatedChecklist,
+          completedBy,
+        };
         updated[targetColumn] = [movedTask, ...updated[targetColumn]];
         return updated;
       });
@@ -485,10 +513,10 @@ export function TaskScreen() {
               <Text style={styles.actionSheetTitle}>{selectedTask.title}</Text>
               {selectedTask.desc ? <Text style={styles.actionSheetDesc}>{selectedTask.desc}</Text> : null}
               
-              <Text style={styles.actionSheetSectionLabel}>Change Status</Text>
+              {selectedTask.column !== 'done' && <Text style={styles.actionSheetSectionLabel}>Change Status</Text>}
               
               <View style={styles.actionButtonsCol}>
-                {selectedTask.column !== 'todo' && (
+                {selectedTask.column !== 'todo' && selectedTask.column !== 'done' && (
                   <TouchableOpacity
                     style={[styles.actionRowBtn, { borderLeftColor: '#64748B' }]}
                     onPress={() => handleMoveTask(selectedTask, 'todo')}
@@ -498,7 +526,7 @@ export function TaskScreen() {
                   </TouchableOpacity>
                 )}
 
-                {selectedTask.column !== 'progress' && (
+                {selectedTask.column !== 'progress' && selectedTask.column !== 'done' && (
                   <TouchableOpacity
                     style={[styles.actionRowBtn, { borderLeftColor: '#F59E0B' }]}
                     onPress={() => handleMoveTask(selectedTask, 'progress')}
@@ -516,6 +544,14 @@ export function TaskScreen() {
                     <View style={[styles.statusDot, { backgroundColor: '#10B981' }]} />
                     <Text style={styles.actionRowBtnText}>Move to Completed</Text>
                   </TouchableOpacity>
+                )}
+
+                {selectedTask.column === 'done' && (
+                  <View style={styles.completedBadgeSheet}>
+                    <Text style={styles.completedBadgeSheetText}>
+                      ✓ Completed by {selectedTask.completedBy || 'Anonymous'}
+                    </Text>
+                  </View>
                 )}
               </View>
 
@@ -902,5 +938,21 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: '#475569',
     fontWeight: FontWeight.bold,
+  },
+  completedBadgeSheet: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#ECFDF5',
+    borderWidth: 1,
+    borderColor: '#A7F3D0',
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+  },
+  completedBadgeSheetText: {
+    fontSize: 13,
+    fontWeight: FontWeight.bold,
+    color: '#22C55E',
   },
 });
