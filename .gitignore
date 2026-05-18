@@ -40,6 +40,11 @@ yarn-error.*
 /ios
 /android
 
-# Google Cloud Service Account Credentials
 
-server/src/config/serviceAccountKey.json
+# Local Environment files
+.env
+.env*.local
+.env.production
+
+# Block any accidental server references if they ever get dragged here
+serviceAccountKey.json
